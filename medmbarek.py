@@ -163,6 +163,14 @@ with st.sidebar:
                 st.markdown(f"_À : {h['time']}_")
         else:
             st.info("Aucun historique pour le moment !")
+# -----------------------------
+# Footer / Creator Tag
+# -----------------------------
+st.markdown("---")  # horizontal line
+st.markdown(
+    "<p style='text-align:center; color:gray; font-size:12px;'>Créé par MED MBAREK, EYA ALLAH MAHMOUD, MAJDI EL BEHI, INSAF EL MATHLOUTHI</p>",
+    unsafe_allow_html=True
+)
 
 
 
