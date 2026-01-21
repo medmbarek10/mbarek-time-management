@@ -1,244 +1,229 @@
 import streamlit as st
-from datetime import datetime
 import pandas as pd
+from datetime import datetime
 import time
 
 # -----------------------------
 # PAGE CONFIG
 # -----------------------------
 st.set_page_config(
-    page_title="Mbarek Chat – Gestion du Temps",
-    page_icon="⏳",
+    page_title="Mbarek – Time Management AI",
+    page_icon="⏰",
     layout="wide"
 )
 
 # -----------------------------
-# STYLING
+# LANGUAGE SWITCH
 # -----------------------------
-st.markdown("""
-<style>
-.advice {
-    background-color:#f5f7fa;
-    padding:20px;
-    border-radius:12px;
-}
-.planning {
-    background-color:#e8f0fe;
-    padding:20px;
-    border-radius:12px;
-}
-.footer {
-    text-align:center;
-    margin-top:30px;
-    font-size:14px;
-    color:gray;
-}
-</style>
-""", unsafe_allow_html=True)
+lang = st.toggle("🇫🇷 Français / 🇬🇧 English", value=True)
 
-# -----------------------------
-# LANGUAGE SWITCHER
-# -----------------------------
-if "lang" not in st.session_state:
-    st.session_state.lang = "FR"
-
-lang = st.radio("🌐 Language / Langue", ["FR", "EN"], index=0, horizontal=True)
-st.session_state.lang = lang
-
-texts = {
-    "FR": {
-        "title": "⏳ Mbarek Chat – Gestion du Temps Intelligente",
-        "upload": "📂 Téléverse ton emploi du temps (optionnel)",
-        "quiz": "📝 Quiz de Gestion du Temps (réponds en français)",
-        "generate": "🚀 Générer mon planning",
-        "history": "📜 Historique",
-        "advice": "💡 Conseils personnalisés",
-        "footer": "Projet réalisé par : MED MBAREK – EYA ALLAH MAHMOUD – MAJDI EL BEHI – INSAF EL MATHLOUTHI",
-        "table_headers": ["Heure", "Activité"]
-    },
-    "EN": {
-        "title": "⏳ Mbarek Chat – Smart Time Management",
-        "upload": "📂 Upload your schedule (optional)",
-        "quiz": "📝 Time Management Quiz (answer in English)",
-        "generate": "🚀 Generate My Schedule",
-        "history": "📜 History",
-        "advice": "💡 Personalized Advice",
-        "footer": "Project by: MED MBAREK – EYA ALLAH MAHMOUD – MAJDI EL BEHI – INSAF EL MATHLOUTHI",
-        "table_headers": ["Time", "Activity"]
-    }
-}
-
-st.title(texts[lang]["title"])
-st.subheader(texts[lang]["upload"])
+def t(fr, en):
+    return fr if lang else en
 
 # -----------------------------
 # SESSION STATE
 # -----------------------------
+if "user_name" not in st.session_state:
+    st.session_state.user_name = ""
+
 if "history" not in st.session_state:
     st.session_state.history = []
 
 # -----------------------------
-# UPLOAD CSV (OPTIONAL)
+# HEADER
 # -----------------------------
-uploaded_file = st.file_uploader(f"{texts[lang]['upload']}", type=["csv"])
-schedule_text = ""
-if uploaded_file:
-    df = pd.read_csv(uploaded_file)
-    if "Titre" in df.columns and "Date" in df.columns:
-        for _, row in df.iterrows():
-            schedule_text += f"- {row['Titre']} (avant {row['Date']})\n"
-        st.success("✅ Emploi du temps chargé" if lang=="FR" else "✅ Schedule uploaded")
+st.markdown("""
+<style>
+.big-title {font-size:42px; font-weight:bold; color:#4CAF50;}
+.subtitle {font-size:18px; color: #999;}
+.creator {font-size:14px; color:#666;}
+.card {background-color:#1e1e1e; padding:20px; border-radius:15px;}
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown(f"""
+<div class="big-title">⏰ Mbarek – Time Management Assistant</div>
+<div class="subtitle">{t("Organise ton temps intelligemment", "Organize your time intelligently")}</div>
+""", unsafe_allow_html=True)
 
 # -----------------------------
-# QUIZ
+# USER NAME (WITH BUTTON)
 # -----------------------------
-st.subheader(texts[lang]["quiz"])
-with st.form("quiz"):
-    col1, col2 = st.columns(2)
+st.markdown("### 👤 " + t("Identification", "Identification"))
 
-    with col1:
-        q1 = st.text_input("1️⃣ " + ("À quelle heure te lèves-tu habituellement ?" if lang=="FR" else "What time do you usually wake up?"))
-        q2 = st.text_input("2️⃣ " + ("Pourquoi te lèves-tu à cette heure ?" if lang=="FR" else "Why do you wake up at this time?"))
-        q3 = st.text_area("3️⃣ " + ("Temps pour chaque activité quotidienne" if lang=="FR" else "Time spent on each daily activity"))
-        q4 = st.text_area("4️⃣ " + ("Pourquoi ton emploi du temps ne te satisfait pas ?" if lang=="FR" else "Why is your schedule unsatisfying?"))
-        q5 = st.text_area("5️⃣ " + ("Activités à réduire (et de combien)" if lang=="FR" else "Activities to reduce (and by how much)"))
+name_input = st.text_input(
+    t("Entre ton prénom", "Enter your name"),
+    placeholder="Ex: Mohamed"
+)
 
-    with col2:
-        q6 = st.text_area("6️⃣ " + ("Activités à ajouter (et durée)" if lang=="FR" else "Activities to add (and duration)"))
-        q7 = st.selectbox("7️⃣ " + ("Moment où tu es le plus concentré" if lang=="FR" else "Time of peak focus"), ["Matin","Après-midi","Soir","Nuit"] if lang=="FR" else ["Morning","Afternoon","Evening","Night"])
-        q8 = st.selectbox("8️⃣ " + ("Moment où tu es le plus fatigué" if lang=="FR" else "Time of least energy"), ["Matin","Après-midi","Soir","Nuit"] if lang=="FR" else ["Morning","Afternoon","Evening","Night"])
-        q9 = st.text_area("9️⃣ " + ("Principales distractions" if lang=="FR" else "Main distractions"))
-        q10 = st.selectbox("🔟 " + ("Te sens-tu débordé ?" if lang=="FR" else "Do you feel overwhelmed?"), ["Oui","Non"] if lang=="FR" else ["Yes","No"])
-
-    submit = st.form_submit_button(texts[lang]["generate"])
-
-# -----------------------------
-# PLANNINGS
-# -----------------------------
-plannings = [
-    {
-        "name":"🌅 Planning Matinal Ultra-Productif",
-        "energy":"Matin",
-        "daily":[
-            ("06:30","Réveil + hydratation + étirements"),
-            ("07:00","Étude profonde (45 min)"),
-            ("08:00","Petit-déjeuner"),
-            ("09:00","Cours / travail"),
-            ("13:00","Pause"),
-            ("16:30","Révisions"),
-            ("18:00","Sport"),
-            ("20:00","Temps libre"),
-            ("22:00","Déconnexion"),
-            ("22:30","Sommeil")
-        ],
-        "weekly":"Début de semaine intense",
-        "score":0
-    },
-    {
-        "name":"🌙 Planning Soir Concentration Maximale",
-        "energy":"Soir",
-        "daily":[
-            ("08:30","Réveil"),
-            ("09:30","Cours / obligations"),
-            ("13:30","Pause"),
-            ("17:00","Repos"),
-            ("19:00","Études intensives"),
-            ("21:30","Révisions"),
-            ("22:30","Déconnexion"),
-            ("23:30","Sommeil")
-        ],
-        "weekly":"Productivité en soirée",
-        "score":0
-    },
-    {
-        "name":"⚖️ Planning Équilibré Durable",
-        "energy":"Après-midi",
-        "daily":[
-            ("07:30","Réveil"),
-            ("08:30","Cours"),
-            ("13:30","Pause"),
-            ("15:30","Étude"),
-            ("17:30","Loisirs / sport"),
-            ("19:30","Révisions"),
-            ("21:30","Déconnexion"),
-            ("22:30","Sommeil")
-        ],
-        "weekly":"Prévention du burn-out",
-        "score":0
-    }
-]
-
-# -----------------------------
-# GENERATION
-# -----------------------------
-if submit:
-    if not all([q1,q2,q3,q4,q5,q6,q9]):
-        st.error("❌ " + ("Tu dois remplir toutes les questions" if lang=="FR" else "You must fill all the questions"))
+if st.button(t("➡️ Continuer", "➡️ Continue")):
+    if name_input.strip() == "":
+        st.error(t("❌ Veuillez entrer votre prénom.", "❌ Please enter your name."))
     else:
-        with st.spinner("🧠 " + ("Analyse en cours..." if lang=="FR" else "Analyzing...")):
-            time.sleep(1.5)
+        st.session_state.user_name = name_input.strip()
 
-        # Score each planning
-        for p in plannings:
-            if p["energy"] == q7:
-                p["score"] += 3
-            if q8 != p["energy"]:
-                p["score"] += 1
-            if q10 == ("Oui" if lang=="FR" else "Yes") and "Équilibré" in p["name"]:
-                p["score"] += 2
+if st.session_state.user_name == "":
+    st.stop()
 
-        best = max(plannings, key=lambda x:x["score"])
+st.success(t(
+    f"Bonjour {st.session_state.user_name} 👋 Prêt à optimiser ton temps ?",
+    f"Hello {st.session_state.user_name} 👋 Ready to optimize your time?"
+))
 
-        st.markdown('<div class="planning">', unsafe_allow_html=True)
-        st.subheader(f"📅 {best['name']}")
-
-        df_schedule = pd.DataFrame(best["daily"], columns=texts[lang]["table_headers"])
-        st.table(df_schedule)
-        st.markdown(f"**{('Stratégie hebdomadaire' if lang=='FR' else 'Weekly Strategy')}:** {best['weekly']}")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        # -----------------------------
-        # ADVICES
-        # -----------------------------
-        st.markdown('<div class="advice">', unsafe_allow_html=True)
-        st.subheader(texts[lang]["advice"])
-        st.markdown("- Planifie la veille / Plan the night before")
-        st.markdown("- Travaille par blocs de 45 minutes / Work in 45-min blocks")
-        if "téléphone" in q9.lower() or "réseaux" in q9.lower():
-            st.markdown("- Téléphone hors de portée / Keep phone away")
-        if q10 == ("Oui" if lang=="FR" else "Yes"):
-            st.markdown("- Réduis tes objectifs / Reduce daily goals")
-        st.markdown("- Garde une heure de coucher fixe / Maintain fixed sleep time")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        # -----------------------------
-        # HISTORY
-        # -----------------------------
-        st.session_state.history.append({
-            "time": datetime.now().strftime("%H:%M"),
-            "planning": best["name"]
-        })
+st.divider()
 
 # -----------------------------
-# SIDEBAR HISTORY
+# QUIZ (2 COLUMNS – 10 QUESTIONS)
+# -----------------------------
+st.markdown("## 📝 " + t("Quiz de gestion du temps", "Time Management Quiz"))
+
+left, right = st.columns(2)
+
+with left:
+    q1 = st.text_input("1️⃣ " + t("À quelle heure te lèves-tu ?", "What time do you wake up?"))
+    q2 = st.text_input("2️⃣ " + t("À quelle heure dors-tu ?", "What time do you sleep?"))
+    q3 = st.text_area("3️⃣ " + t("Décris ta journée actuelle", "Describe your current day"))
+    q4 = st.text_area("4️⃣ " + t("Qu'est-ce qui te fait perdre du temps ?", "What wastes your time?"))
+    q5 = st.selectbox(
+        "5️⃣ " + t("Moment le plus productif", "Most productive moment"),
+        ["Matin", "Après-midi", "Soir", "Nuit"]
+    )
+
+with right:
+    q6 = st.selectbox(
+        "6️⃣ " + t("Moment le plus fatiguant", "Most tiring moment"),
+        ["Matin", "Après-midi", "Soir", "Nuit"]
+    )
+    q7 = st.text_area("7️⃣ " + t("Objectifs principaux", "Main goals"))
+    q8 = st.text_area("8️⃣ " + t("Temps pour études (heures)", "Study time (hours)"))
+    q9 = st.text_area("9️⃣ " + t("Temps pour loisirs", "Leisure time"))
+    q10 = st.text_area("🔟 " + t("Que veux-tu améliorer ?", "What do you want to improve?"))
+
+# -----------------------------
+# GENERATE BUTTON
+# -----------------------------
+st.markdown("## ⚙️ " + t("Génération", "Generation"))
+
+if st.button("✨ " + t("Générer mon planning", "Generate my schedule")):
+
+    # Validate
+    if not all([q1, q2, q3, q4, q7, q10]):
+        st.error(t(
+            "❌ Tu dois répondre à toutes les questions importantes.",
+            "❌ You must answer all important questions."
+        ))
+        st.stop()
+
+    with st.spinner(t("Analyse en cours...", "Analyzing...")):
+        time.sleep(1.5)
+
+    # -----------------------------
+    # SCORE
+    # -----------------------------
+    score = 100
+    if "téléphone" in q4.lower() or "phone" in q4.lower():
+        score -= 20
+    if "je ne sais pas" in q7.lower():
+        score -= 15
+    if q5 == q6:
+        score -= 10
+
+    score = max(score, 40)
+
+    # -----------------------------
+    # DYNAMIC SCHEDULE LOGIC
+    # -----------------------------
+    schedule = []
+
+    if q5 == "Matin":
+        schedule.append(("07:00", "09:00", "Études / Travail profond"))
+    elif q5 == "Soir":
+        schedule.append(("18:00", "20:00", "Études ciblées"))
+
+    schedule += [
+        ("09:00", "12:00", "Cours / Travail"),
+        ("12:00", "13:00", "Pause & repas"),
+        ("13:00", "16:00", "Révisions / Devoirs"),
+        ("16:00", "17:30", "Sport / Marche"),
+        ("17:30", "19:00", "Loisirs contrôlés"),
+        ("21:00", q2, "Préparation au sommeil")
+    ]
+
+    df = pd.DataFrame(schedule, columns=[
+        t("Début", "Start"),
+        t("Fin", "End"),
+        t("Activité", "Activity")
+    ])
+
+    # -----------------------------
+    # DISPLAY RESULTS
+    # -----------------------------
+    st.markdown("## 📊 " + t("Résultats", "Results"))
+
+    st.metric(
+        t("Score d'organisation", "Organization score"),
+        f"{score}/100"
+    )
+
+    st.markdown("### 📅 " + t("Planning personnalisé", "Personalized schedule"))
+    st.table(df)
+
+    st.markdown("### 💡 " + t("Conseils personnalisés", "Personalized advice"))
+
+    advices = [
+        t(
+            "• Réduis les distractions pendant tes heures productives.",
+            "• Reduce distractions during your productive hours."
+        ),
+        t(
+            "• Respecte une heure de sommeil fixe.",
+            "• Keep a fixed sleeping time."
+        ),
+        t(
+            "• Transforme tes objectifs en tâches concrètes.",
+            "• Turn goals into concrete tasks."
+        ),
+        t(
+            "• Utilise ton moment fort pour les tâches difficiles.",
+            "• Use your peak time for hard tasks."
+        )
+    ]
+
+    for a in advices:
+        st.write(a)
+
+    # -----------------------------
+    # SAVE HISTORY
+    # -----------------------------
+    st.session_state.history.append({
+        "time": datetime.now().strftime("%H:%M"),
+        "score": score,
+        "schedule": df
+    })
+
+# -----------------------------
+# HISTORY SIDEBAR
 # -----------------------------
 with st.sidebar:
-    st.subheader(texts[lang]["history"])
-    for h in st.session_state.history[::-1]:
-        st.markdown(f"- {h['time']} → {h['planning']}")
+    st.markdown("## 📜 " + t("Historique", "History"))
+
+    if st.session_state.history:
+        for i, h in enumerate(st.session_state.history[::-1], 1):
+            st.markdown(f"**{i}. {h['time']} – {h['score']}/100**")
+    else:
+        st.info(t("Aucun historique", "No history yet"))
 
 # -----------------------------
 # FOOTER
 # -----------------------------
-st.markdown(f"""
-<div class="footer">
-{texts[lang]['footer']}
+st.divider()
+st.markdown("""
+<div class="creator">
+👨‍💻 Projet réalisé par:<br>
+• MED MBAREK<br>
+• EYA ALLAH MAHMOUD<br>
+• MAJDI EL BEHI<br>
+• INSAF EL MATHLOUTHI
 </div>
 """, unsafe_allow_html=True)
-
-
-
-
-
-
 
