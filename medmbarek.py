@@ -157,5 +157,6 @@ if st.button(t("⚡ Générer mon planning", "⚡ Generate my schedule"), use_co
 # ---------------- FOOTER ----------------
 st.markdown("---")
 st.caption(
-    "👨‍💻 MED MBAREK · 👩‍💻 EYA ALLAH MAHMOUD · 👨‍💻 MAJDI EL BEHI · 👩‍💻 INSAF EL MATHLOUTHI"
+    "👨‍💻 MED MBAREK · 👩‍💻 EYA ALLAH MAHMOUD · 👨‍💻 MAJDI EL BEHI · "
 )
+
